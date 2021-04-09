@@ -1,0 +1,98 @@
+-- REGEXP_REPLACE removes duplicate aggregate records
+with testdata (original) as (
+    select 'a' from dual union all
+    select 'a,b' from dual union all
+    select 'a,b,c' from dual union all
+    select 'a,b,b' from dual union all
+    select 'a,b,b,b' from dual union all
+    select 'a,b,b,b,b' from dual union all
+    select 'a,b,b,b,b,c' from dual union all
+    select 'a,b,b,b,b,c,c' from dual union all
+    select 'a,a,b,b,c,c,d' from dual
+) 
+select 
+    original,
+     regexp_replace(original, '([^,]+)(,\1)+', '\1') as dedupped
+from testdata
+
+/******************************************************************************/
+
+-- FRACTIONAL YEARS
+
+select round((sysdate - to_date('22-DEC-2011')) / 365.25,3) DATEDIFF from dual
+UNION ALL
+select round((sysdate - to_date('22-DEC-2012')) / 365.25,3) DATEDIFF from dual
+UNION ALL
+select round((sysdate - to_date('22-DEC-2013')) / 365.25,3) DATEDIFF from dual
+UNION ALL
+select round((sysdate - to_date('22-DEC-2014')) / 365.25,3) DATEDIFF from dual
+UNION ALL
+select round((sysdate - to_date('22-DEC-2015')) / 365.25,3) DATEDIFF from dual
+UNION ALL
+select round((sysdate - to_date('22-DEC-2016')) / 365.25,3) DATEDIFF from dual
+UNION ALL
+select round((sysdate - to_date('22-DEC-2017')) / 365.25,3) DATEDIFF from dual
+UNION ALL
+select round((sysdate - to_date('22-DEC-2018')) / 365.25,3) DATEDIFF from dual
+
+/******************************************************************************/
+
+-- ISO compliant week numbers
+
+select TRUNC(sysdate - 7, 'iw') AS prev_week_start_date,
+       TRUNC(sysdate, 'iw') - 1/86400 AS prev_week_end_date,
+       TRUNC(sysdate, 'iw') AS iso_week_start_date,
+       TRUNC(sysdate + 7, 'iw') - 1/86400 iso_week_end_date
+from dual
+
+/******************************************************************************/
+
+-- Find date format of active session
+
+SELECT * FROM nls_session_parameters WHERE parameter = 'NLS_DATE_FORMAT'
+
+/******************************************************************************/
+
+-- Random number generator
+
+select
+--cast(dbms_random.value(1,10) as int),
+dbms_random.value,
+row_number() over (order by null)
+--rank(dbms_random.value) within group (ORDER BY NULL)
+from dual
+connect by level < 21
+
+/******************************************************************************/
+
+with mo_revenue (MONTH, REVENUE) as (
+SELECT add_months(last_day(trunc(sysdate)),-19), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-18), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-17), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-16), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-15), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-14), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-13), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-12), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-11), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-10), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-9), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-8), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-7), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-6), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-5), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-4), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-3), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-2), round(dbms_random.value(0,1),0) from DUAL UNION
+SELECT add_months(last_day(trunc(sysdate)),-1), round(dbms_random.value(0,1),0) from DUAL
+)
+
+select
+a.month,
+a.revenue,
+sum(b.revenue) as YTD_REVENUE
+from mo_revenue a
+join mo_revenue b on extract(year from a.month) = extract(year from b.month)
+                     and b.month <= a.month
+group by a.month, a.revenue
+order by month
